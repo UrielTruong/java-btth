@@ -1,12 +1,12 @@
 package gui;
 
-import model.HoaDon;
+import db.ConnectionFactory;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.BorderLayout;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 public class MainFrame extends JFrame {
     public MainFrame() {
@@ -15,13 +15,12 @@ public class MainFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Danh sách hóa đơn đã lập, dùng chung giữa khu lập hóa đơn và khu quản lý hóa đơn
-        List<HoaDon> dsHoaDon = new ArrayList<>();
+        kiemTraKetNoiCSDL();
 
         JTabbedPane tabs = new JTabbedPane();
-        HoaDonPanel hoaDonPanel = new HoaDonPanel(dsHoaDon);
+        HoaDonPanel hoaDonPanel = new HoaDonPanel();
         BanPanel banPanel = new BanPanel();
-        QuanLyHoaDonPanel quanLyHoaDonPanel = new QuanLyHoaDonPanel(dsHoaDon);
+        QuanLyHoaDonPanel quanLyHoaDonPanel = new QuanLyHoaDonPanel();
 
         tabs.addTab("Quản lý món", new MonPanel());
         tabs.addTab("Quản lý bàn", banPanel);
@@ -43,5 +42,16 @@ public class MainFrame extends JFrame {
 
         add(tabs, BorderLayout.CENTER);
 
+    }
+
+    // Kiểm tra kết nối MySQL 1 lần lúc khởi động để báo lỗi rõ ràng thay vì để từng panel tự báo rải rác
+    private void kiemTraKetNoiCSDL() {
+        try (Connection conn = ConnectionFactory.getConnection()) {
+            // Kết nối thành công, không cần làm gì thêm
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null,
+                    "Không kết nối được MySQL:\n" + ex.getMessage(),
+                    "Lỗi kết nối CSDL", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }

@@ -1,5 +1,7 @@
 package gui;
 
+import dao.HoaDonDAO;
+import dao.MonDAO;
 import model.ChiTietHoaDon;
 import model.HoaDon;
 import model.Mon;
@@ -7,6 +9,7 @@ import model.Mon;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -14,9 +17,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HoaDonPanel extends JPanel {
+    private final MonDAO monDAO = new MonDAO();
+    private final HoaDonDAO hoaDonDAO = new HoaDonDAO();
+
     private HoaDon hoaDon;
     private List<Mon> dsMon;
-    private List<HoaDon> dsHoaDonDaLap;
     private DecimalFormat df = new DecimalFormat("#,### VNĐ");
     private int maHDCount = 1;
 
@@ -41,10 +46,9 @@ public class HoaDonPanel extends JPanel {
     private JLabel lblTamTinh, lblGiamGia, lblTongTien;
     private JButton btnThanhToan, btnXoaMon, btnHuyHoaDon;
 
-    public HoaDonPanel(List<HoaDon> dsHoaDonDaLap) {
+    public HoaDonPanel() {
         this.hoaDon = new HoaDon();
-        this.dsMon = khoiTaoDanhSachMon();
-        this.dsHoaDonDaLap = dsHoaDonDaLap;
+        this.dsMon = taiDanhSachMonTuDB();
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -66,12 +70,14 @@ public class HoaDonPanel extends JPanel {
         cbSoBan.setSelectedItem(tenBan);
     }
 
-    private List<Mon> khoiTaoDanhSachMon() {
-        List<Mon> list = new ArrayList<>();
-        list.add(new Mon("TS01", "Trà sữa Matcha", "Trà sữa", 35000));
-        list.add(new Mon("TS02", "Trà sữa Trân châu", "Trà sữa", 30000));
-        list.add(new Mon("TC01", "Trà đào cam sả", "Trà trái cây", 35000));
-        return list;
+    private List<Mon> taiDanhSachMonTuDB() {
+        try {
+            return monDAO.layTatCa();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi tải danh sách món từ CSDL: " + ex.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return new ArrayList<>();
+        }
     }
 
     private JPanel taoKhuThongTin() {
@@ -293,13 +299,20 @@ public class HoaDonPanel extends JPanel {
         double tienGiam = tamTinh * (phanTramGiam / 100.0);
         double tongTien = tamTinh - tienGiam;
 
-        // Lưu bản sao hóa đơn vào danh sách quản lý (bản sao vì "hoaDon" sẽ bị xóa dữ liệu khi lập hóa đơn mới)
+        // Lưu hóa đơn vào CSDL (bản sao vì "hoaDon" sẽ bị xóa dữ liệu khi lập hóa đơn mới)
         hoaDon.setMaHoaDon(txtMaHD.getText());
         hoaDon.setNgayLap(txtNgay.getText());
         hoaDon.setTenKhachHang(tenKhach);
         hoaDon.setSoDT(txtSoDT.getText().trim());
         hoaDon.setSoBan((String) cbSoBan.getSelectedItem());
-        dsHoaDonDaLap.add(saoChepHoaDon(hoaDon));
+
+        try {
+            hoaDonDAO.luuHoaDon(saoChepHoaDon(hoaDon));
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi lưu hóa đơn vào CSDL: " + ex.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
         StringBuilder sb = new StringBuilder();
         sb.append("====================================================\n");

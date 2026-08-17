@@ -1,5 +1,6 @@
 package gui;
 
+import dao.MonDAO;
 import model.Mon;
 
 import javax.swing.*;
@@ -7,6 +8,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +21,9 @@ public class MonPanel extends JPanel {
     private JTable table;
     private DefaultTableModel model;
 
-    // Dữ liệu gốc
+    private final MonDAO monDAO = new MonDAO();
+
+    // Dữ liệu gốc (nạp từ CSDL)
     private List<Mon> dsMon = new ArrayList<>();
 
     public MonPanel() {
@@ -90,16 +94,20 @@ public class MonPanel extends JPanel {
 
         add(scrollPane, BorderLayout.CENTER);
 
-        // --- 3. DỮ LIỆU MẪU & SỰ KIỆN ---
-        khoiTaoDuLieuMau();
+        // --- 3. DỮ LIỆU TỪ CSDL & SỰ KIỆN ---
+        taiDuLieuTuDB();
         loadTable();
         ganSuKien();
     }
 
-    private void khoiTaoDuLieuMau() {
-        dsMon.add(new Mon("TS01", "Trà sữa Matcha", "Trà sữa", 35000));
-        dsMon.add(new Mon("TS02", "Trà sữa Trân châu", "Trà sữa", 30000));
-        dsMon.add(new Mon("TC01", "Trà đào cam sả", "Trà trái cây", 35000));
+    private void taiDuLieuTuDB() {
+        try {
+            dsMon = monDAO.layTatCa();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi tải danh sách món từ CSDL: " + ex.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            dsMon = new ArrayList<>();
+        }
     }
 
     // Đổ dữ liệu từ dsMon ra JTable
@@ -215,8 +223,17 @@ public class MonPanel extends JPanel {
             }
         }
 
-        // Thêm vào list và cập nhật bảng
-        dsMon.add(new Mon(ma, ten, loai, donGia));
+        // Ghi xuống CSDL trước, thành công mới cập nhật bộ nhớ trong
+        Mon monMoi = new Mon(ma, ten, loai, donGia);
+        try {
+            monDAO.them(monMoi);
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi thêm món vào CSDL: " + ex.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        dsMon.add(monMoi);
         loadTable();
         xuLyLamMoi();
         JOptionPane.showMessageDialog(this, "Thêm món thành công!");
@@ -253,7 +270,8 @@ public class MonPanel extends JPanel {
 
         // Kiểm tra mã trùng với các món khác (ngoại trừ chính món đang sửa)
         Mon monHienTai = dsMon.get(row);
-        if (!monHienTai.getMaMon().equalsIgnoreCase(ma)) {
+        String maCu = monHienTai.getMaMon();
+        if (!maCu.equalsIgnoreCase(ma)) {
             for (int i = 0; i < dsMon.size(); i++) {
                 if (i != row && dsMon.get(i).getMaMon().equalsIgnoreCase(ma)) {
                     JOptionPane.showMessageDialog(this, "Mã món đã tồn tại ở vị trí khác!");
@@ -262,7 +280,15 @@ public class MonPanel extends JPanel {
             }
         }
 
-        // Cập nhật thông tin trong list
+        // Ghi xuống CSDL trước, thành công mới cập nhật bộ nhớ trong
+        try {
+            monDAO.sua(maCu, new Mon(ma, ten, loai, donGia));
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi sửa món trong CSDL: " + ex.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         monHienTai.setMaMon(ma);
         monHienTai.setTenMon(ten);
         monHienTai.setLoai(loai);
@@ -282,6 +308,14 @@ public class MonPanel extends JPanel {
         int chon = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc muốn xóa món này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
         if (chon == JOptionPane.YES_OPTION) {
+            try {
+                monDAO.xoa(dsMon.get(row).getMaMon());
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Lỗi khi xóa món khỏi CSDL: " + ex.getMessage(),
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             dsMon.remove(row);
             loadTable();
             xuLyLamMoi();

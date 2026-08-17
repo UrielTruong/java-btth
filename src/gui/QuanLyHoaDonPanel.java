@@ -1,5 +1,6 @@
 package gui;
 
+import dao.HoaDonDAO;
 import model.ChiTietHoaDon;
 import model.HoaDon;
 
@@ -8,12 +9,13 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
 public class QuanLyHoaDonPanel extends JPanel {
-    private final List<HoaDon> dsHoaDon;
+    private final HoaDonDAO hoaDonDAO = new HoaDonDAO();
     // Danh sách hóa đơn đang hiển thị trên bảng, khớp theo thứ tự dòng để tra cứu khi click
     private final List<HoaDon> dsHienThi = new ArrayList<>();
     private final DecimalFormat df = new DecimalFormat("#,### VNĐ");
@@ -23,9 +25,7 @@ public class QuanLyHoaDonPanel extends JPanel {
     private JTable table;
     private DefaultTableModel model;
 
-    public QuanLyHoaDonPanel(List<HoaDon> dsHoaDon) {
-        this.dsHoaDon = dsHoaDon;
-
+    public QuanLyHoaDonPanel() {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -86,42 +86,36 @@ public class QuanLyHoaDonPanel extends JPanel {
     }
 
     private void loadTable() {
-        model.setRowCount(0);
-        dsHienThi.clear();
-        for (HoaDon hd : dsHoaDon) {
-            themDong(hd);
+        try {
+            hienThi(hoaDonDAO.layTatCa());
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi tải danh sách hóa đơn từ CSDL: " + ex.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    private void themDong(HoaDon hd) {
-        dsHienThi.add(hd);
-        model.addRow(new Object[]{
-                hd.getMaHoaDon(),
-                hd.getNgayLap(),
-                hd.getTenKhachHang(),
-                hd.getSoBan(),
-                df.format(hd.tinhTongTien())
-        });
     }
 
     private void xuLyTimKiem() {
-        String tuKhoa = txtTimKiem.getText().trim().toLowerCase();
-
-        if (tuKhoa.isEmpty()) {
-            loadTable();
-            return;
+        String tuKhoa = txtTimKiem.getText().trim();
+        try {
+            hienThi(hoaDonDAO.timKiem(tuKhoa));
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi tìm kiếm hóa đơn trong CSDL: " + ex.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+    }
 
+    private void hienThi(List<HoaDon> ds) {
         model.setRowCount(0);
         dsHienThi.clear();
-        for (HoaDon hd : dsHoaDon) {
-            String ma = hd.getMaHoaDon() == null ? "" : hd.getMaHoaDon().toLowerCase();
-            String ngay = hd.getNgayLap() == null ? "" : hd.getNgayLap().toLowerCase();
-            String khach = hd.getTenKhachHang() == null ? "" : hd.getTenKhachHang().toLowerCase();
-
-            if (ma.contains(tuKhoa) || ngay.contains(tuKhoa) || khach.contains(tuKhoa)) {
-                themDong(hd);
-            }
+        for (HoaDon hd : ds) {
+            dsHienThi.add(hd);
+            model.addRow(new Object[]{
+                    hd.getMaHoaDon(),
+                    hd.getNgayLap(),
+                    hd.getTenKhachHang(),
+                    hd.getSoBan(),
+                    df.format(hd.tinhTongTien())
+            });
         }
     }
 

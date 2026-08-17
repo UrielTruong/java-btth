@@ -1,9 +1,14 @@
 package gui;
 
+import dao.BanDAO;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.SQLException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class BanPanel extends JPanel {
     public static final String TRONG = "Trống";
@@ -14,10 +19,12 @@ public class BanPanel extends JPanel {
     private static final Color MAU_DANG_PHUC_VU = new Color(255, 127, 80);
     private static final Color MAU_DA_DAT = new Color(255, 215, 0);
 
+    private final BanDAO banDAO = new BanDAO();
+
     // Phải khớp tên với các mục trong cbSoBan của HoaDonPanel
-    private final String[] tenBan = {"Bàn 1", "Bàn 2", "Bàn 3", "Bàn 4", "Bàn 5"};
-    private final JButton[] nutBan = new JButton[tenBan.length];
-    private final String[] trangThaiBan = new String[tenBan.length];
+    private final String[] tenBan;
+    private final JButton[] nutBan;
+    private final String[] trangThaiBan;
 
     // Sự kiện báo cho MainFrame biết người dùng vừa chọn bàn nào
     public interface ChonBanListener {
@@ -26,6 +33,11 @@ public class BanPanel extends JPanel {
     private ChonBanListener chonBanListener;
 
     public BanPanel() {
+        Map<String, String> duLieuBan = taiDuLieuBanTuDB();
+        tenBan = duLieuBan.keySet().toArray(new String[0]);
+        nutBan = new JButton[tenBan.length];
+        trangThaiBan = duLieuBan.values().toArray(new String[0]);
+
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -39,7 +51,6 @@ public class BanPanel extends JPanel {
             btn.setOpaque(true);
 
             nutBan[i] = btn;
-            trangThaiBan[i] = TRONG;
             capNhatGiaoDienNut(i);
 
             final int idx = i;
@@ -57,6 +68,23 @@ public class BanPanel extends JPanel {
 
         add(panelLuoi, BorderLayout.CENTER);
         add(taoChuThich(), BorderLayout.SOUTH);
+    }
+
+    private Map<String, String> taiDuLieuBanTuDB() {
+        try {
+            Map<String, String> ds = banDAO.layTatCa();
+            if (!ds.isEmpty()) return ds;
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi tải danh sách bàn từ CSDL: " + ex.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+
+        // CSDL rỗng hoặc lỗi kết nối -> dùng tạm 5 bàn mặc định để giao diện vẫn dùng được
+        Map<String, String> macDinh = new LinkedHashMap<>();
+        for (int i = 1; i <= 5; i++) {
+            macDinh.put("Bàn " + i, TRONG);
+        }
+        return macDinh;
     }
 
     private JPanel taoChuThich() {
@@ -109,6 +137,13 @@ public class BanPanel extends JPanel {
         for (String trangThai : new String[]{TRONG, DANG_PHUC_VU, DA_DAT}) {
             JMenuItem item = new JMenuItem(trangThai);
             item.addActionListener(ev -> {
+                try {
+                    banDAO.capNhatTrangThai(tenBan[idx], trangThai);
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật trạng thái bàn trong CSDL: " + ex.getMessage(),
+                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
                 trangThaiBan[idx] = trangThai;
                 capNhatGiaoDienNut(idx);
             });
