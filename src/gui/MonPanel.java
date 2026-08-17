@@ -14,6 +14,8 @@ public class MonPanel extends JPanel {
     private JTextField txtMaMon, txtTenMon, txtDonGia;
     private JComboBox<String> cbLoai;
     private JButton btnThem, btnSua, btnXoa, btnLamMoi;
+    private JTextField txtTimKiem;
+    private JButton btnTim;
     private JTable table;
     private DefaultTableModel model;
 
@@ -50,14 +52,27 @@ public class MonPanel extends JPanel {
         btnXoa = new JButton("Xóa");
         btnLamMoi = new JButton("Làm mới");
 
+        panelButtons.setLayout(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         panelButtons.add(btnThem);
         panelButtons.add(btnSua);
         panelButtons.add(btnXoa);
         panelButtons.add(btnLamMoi);
 
+        // --- Khu tìm kiếm (theo Mã món, Tên món hoặc Loại) ---
+        JPanel panelSearch = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+        txtTimKiem = new JTextField(20);
+        btnTim = new JButton("Tìm");
+        panelSearch.add(new JLabel("Tìm kiếm:"));
+        panelSearch.add(txtTimKiem);
+        panelSearch.add(btnTim);
+
+
+        panelTop.setLayout(new BorderLayout());
         panelTop.add(panelInput, BorderLayout.CENTER);
         panelTop.add(panelButtons, BorderLayout.SOUTH);
+        panelTop.add(panelSearch, BorderLayout.NORTH);
 
+        //add panelTop vao top cua main frame
         add(panelTop, BorderLayout.NORTH);
 
         // --- 2. BẢNG DỮ LIỆU (CENTER) ---
@@ -128,6 +143,34 @@ public class MonPanel extends JPanel {
 
         // Nút Làm mới
         btnLamMoi.addActionListener(e -> xuLyLamMoi());
+
+        // Nút Tìm & nhấn Enter trên ô tìm kiếm
+        btnTim.addActionListener(e -> xuLyTimKiem());
+        txtTimKiem.addActionListener(e -> xuLyTimKiem());
+    }
+
+    // Tìm kiếm theo Mã món, Tên món hoặc Loại (khớp gần đúng, không phân biệt hoa thường)
+    private void xuLyTimKiem() {
+        String tuKhoa = txtTimKiem.getText().trim().toLowerCase();
+
+        if (tuKhoa.isEmpty()) {
+            loadTable();
+            return;
+        }
+
+        model.setRowCount(0);
+        for (Mon m : dsMon) {
+            if (m.getMaMon().toLowerCase().contains(tuKhoa)
+                    || m.getTenMon().toLowerCase().contains(tuKhoa)
+                    || m.getLoai().toLowerCase().contains(tuKhoa)) {
+                model.addRow(new Object[]{
+                        m.getMaMon(),
+                        m.getTenMon(),
+                        m.getLoai(),
+                        (long) m.getDonGia()
+                });
+            }
+        }
     }
 
     private void xuLyThem() {
@@ -251,6 +294,8 @@ public class MonPanel extends JPanel {
         txtTenMon.setText("");
         txtDonGia.setText("");
         cbLoai.setSelectedIndex(0);
+        txtTimKiem.setText("");
         table.clearSelection();
+        loadTable();
     }
 }

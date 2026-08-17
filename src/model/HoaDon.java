@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HoaDon {
+    private String maHoaDon;
+    private String ngayLap;
     private String tenKhachHang;
     private  String soDT;
     private  String soBan;
@@ -18,6 +20,22 @@ public class HoaDon {
         this.soDT = soDT;
         this.soBan = soBan;
         this.chiTiet = new ArrayList<>();
+    }
+
+    public String getMaHoaDon() {
+        return maHoaDon;
+    }
+
+    public void setMaHoaDon(String maHoaDon) {
+        this.maHoaDon = maHoaDon;
+    }
+
+    public String getNgayLap() {
+        return ngayLap;
+    }
+
+    public void setNgayLap(String ngayLap) {
+        this.ngayLap = ngayLap;
     }
 
     public String getTenKhachHang() {

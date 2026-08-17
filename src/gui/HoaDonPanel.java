@@ -16,6 +16,7 @@ import java.util.List;
 public class HoaDonPanel extends JPanel {
     private HoaDon hoaDon;
     private List<Mon> dsMon;
+    private List<HoaDon> dsHoaDonDaLap;
     private DecimalFormat df = new DecimalFormat("#,### VNĐ");
     private int maHDCount = 1;
 
@@ -40,9 +41,10 @@ public class HoaDonPanel extends JPanel {
     private JLabel lblTamTinh, lblGiamGia, lblTongTien;
     private JButton btnThanhToan, btnXoaMon, btnHuyHoaDon;
 
-    public HoaDonPanel() {
+    public HoaDonPanel(List<HoaDon> dsHoaDonDaLap) {
         this.hoaDon = new HoaDon();
         this.dsMon = khoiTaoDanhSachMon();
+        this.dsHoaDonDaLap = dsHoaDonDaLap;
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -57,6 +59,11 @@ public class HoaDonPanel extends JPanel {
 
         ganSuKien();
         capNhatTongTien();
+    }
+
+    // Cho phép panel khác (VD: BanPanel) chọn sẵn số bàn khi mở tab lập hóa đơn
+    public void chonBan(String tenBan) {
+        cbSoBan.setSelectedItem(tenBan);
     }
 
     private List<Mon> khoiTaoDanhSachMon() {
@@ -223,6 +230,14 @@ public class HoaDonPanel extends JPanel {
         if (chkThach.isSelected()) tienTopping += 5000;
         if (chkFlan.isSelected()) tienTopping += 10000;
 
+        // Ép commit giá trị đang gõ tay trong ô số lượng (nếu chưa Tab/Enter, spinner vẫn giữ giá trị cũ)
+        try {
+            spnSoLuong.commitEdit();
+        } catch (java.text.ParseException ex) {
+            JOptionPane.showMessageDialog(this, "Số lượng không hợp lệ!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         String size = rdoL.isSelected() ? "L" : "M";
         int soLuong = (int) spnSoLuong.getValue();
 
@@ -278,6 +293,14 @@ public class HoaDonPanel extends JPanel {
         double tienGiam = tamTinh * (phanTramGiam / 100.0);
         double tongTien = tamTinh - tienGiam;
 
+        // Lưu bản sao hóa đơn vào danh sách quản lý (bản sao vì "hoaDon" sẽ bị xóa dữ liệu khi lập hóa đơn mới)
+        hoaDon.setMaHoaDon(txtMaHD.getText());
+        hoaDon.setNgayLap(txtNgay.getText());
+        hoaDon.setTenKhachHang(tenKhach);
+        hoaDon.setSoDT(txtSoDT.getText().trim());
+        hoaDon.setSoBan((String) cbSoBan.getSelectedItem());
+        dsHoaDonDaLap.add(saoChepHoaDon(hoaDon));
+
         StringBuilder sb = new StringBuilder();
         sb.append("====================================================\n");
         sb.append("                 HÓA ĐƠN BÁN HÀNG                   \n");
@@ -320,6 +343,14 @@ public class HoaDonPanel extends JPanel {
         if (chon == JOptionPane.YES_OPTION) {
             lamMoiForm();
         }
+    }
+
+    private HoaDon saoChepHoaDon(HoaDon nguon) {
+        HoaDon banSao = new HoaDon(nguon.getTenKhachHang(), nguon.getSoDT(), nguon.getSoBan());
+        banSao.setMaHoaDon(nguon.getMaHoaDon());
+        banSao.setNgayLap(nguon.getNgayLap());
+        banSao.setChiTiet(new ArrayList<>(nguon.getChiTiet()));
+        return banSao;
     }
 
     private void lamMoiForm() {
