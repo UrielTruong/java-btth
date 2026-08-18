@@ -71,6 +71,24 @@ public class HoaDonPanel extends JPanel {
         cbSoBan.setSelectedItem(tenBan);
     }
 
+    // Nạp lại danh sách món mới nhất từ CSDL (gọi khi chuyển sang tab Lập hóa đơn,
+    // vì món có thể vừa được thêm/sửa/xóa ở tab Quản lý món trong lúc tab này đã mở sẵn)
+    public void lamMoiDanhSachMon() {
+        dsMon = taiDanhSachMonTuDB();
+
+        Object dangChon = cbMon.getSelectedItem();
+        cbMon.removeAllItems();
+        for (Mon m : dsMon) {
+            cbMon.addItem(m.getTenMon() + " (" + df.format(m.getDonGia()) + ")");
+        }
+        if (dangChon != null) {
+            cbMon.setSelectedItem(dangChon);
+        }
+        if (cbMon.getSelectedIndex() < 0 && cbMon.getItemCount() > 0) {
+            cbMon.setSelectedIndex(0);
+        }
+    }
+
     private List<Mon> taiDanhSachMonTuDB() {
         try {
             return monDAO.layTatCa();

@@ -37,6 +37,8 @@ public class MainFrame extends JFrame {
         tabs.addChangeListener(e -> {
             if (tabs.getSelectedComponent() == quanLyHoaDonPanel) {
                 quanLyHoaDonPanel.lamMoiDuLieu();
+            } else if (tabs.getSelectedComponent() == hoaDonPanel) {
+                hoaDonPanel.lamMoiDanhSachMon();
             }
         });
 
