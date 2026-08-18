@@ -287,6 +287,21 @@ public class HoaDonPanel extends JPanel {
 
         capNhatBang();
         capNhatTongTien();
+
+        // Reset size/đường/đá/topping/số lượng để không bị dính sang lần chọn món tiếp theo
+        resetTuyChonMon();
+    }
+
+    // Đưa khu "Chọn món & Tùy chọn" (size, đường, đá, topping, số lượng) về mặc định
+    private void resetTuyChonMon() {
+        rdoM.setSelected(true);
+        spnSoLuong.setValue(1);
+        cbDuong.setSelectedIndex(0);
+        cbDa.setSelectedIndex(0);
+        chkTranChau.setSelected(false);
+        chkPudding.setSelected(false);
+        chkThach.setSelected(false);
+        chkFlan.setSelected(false);
     }
 
     private void xuLyXoaMon() {
@@ -402,14 +417,7 @@ public class HoaDonPanel extends JPanel {
         txtSoDT.setText("");
         cbSoBan.setSelectedIndex(0);
         cbMon.setSelectedIndex(0);
-        rdoM.setSelected(true);
-        spnSoLuong.setValue(1);
-        cbDuong.setSelectedIndex(0);
-        cbDa.setSelectedIndex(0);
-        chkTranChau.setSelected(false);
-        chkPudding.setSelected(false);
-        chkThach.setSelected(false);
-        chkFlan.setSelected(false);
+        resetTuyChonMon();
 
         maHDCount++;
         txtMaHD.setText(String.format("HD%03d", maHDCount));

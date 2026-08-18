@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS chi_tiet_hoa_don (
   so_luong INT NOT NULL,
   size VARCHAR(5),
   tien_topping DOUBLE DEFAULT 0,
-  FOREIGN KEY (ma_hoa_don) REFERENCES hoa_don(ma_hoa_don),
-  FOREIGN KEY (ma_mon) REFERENCES mon(ma_mon)
+  CONSTRAINT fk_ct_hoadon FOREIGN KEY (ma_hoa_don) REFERENCES hoa_don(ma_hoa_don),
+  CONSTRAINT fk_ct_mon FOREIGN KEY (ma_mon) REFERENCES mon(ma_mon) ON UPDATE CASCADE
 );
 
 INSERT INTO mon (ma_mon, ten_mon, loai, don_gia) VALUES
