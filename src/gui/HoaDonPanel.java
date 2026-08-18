@@ -49,6 +49,7 @@ public class HoaDonPanel extends JPanel {
     public HoaDonPanel() {
         this.hoaDon = new HoaDon();
         this.dsMon = taiDanhSachMonTuDB();
+        this.maHDCount = layMaHDBatDauTuDB();
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -77,6 +78,17 @@ public class HoaDonPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Lỗi khi tải danh sách món từ CSDL: " + ex.getMessage(),
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
             return new ArrayList<>();
+        }
+    }
+
+    // Tiếp tục đánh số hóa đơn từ CSDL (thay vì luôn bắt đầu lại từ 1 sau mỗi lần mở app)
+    private int layMaHDBatDauTuDB() {
+        try {
+            return hoaDonDAO.laySoThuTuLonNhat() + 1;
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi lấy mã hóa đơn mới nhất từ CSDL: " + ex.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return 1;
         }
     }
 
@@ -182,7 +194,7 @@ public class HoaDonPanel extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createTitledBorder("Tổng kết & Thanh toán"));
 
-        JPanel pnlTien = new JPanel(new FlowLayout(FlowLayout.LEFT, 30, 5));
+        JPanel pnlTien = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 5));
         lblTamTinh = new JLabel("Tạm tính: 0 VNĐ");
         lblGiamGia = new JLabel("Giảm giá (0%): 0 VNĐ");
         lblTongTien = new JLabel("<html><b>Tổng tiền: <font color='red'>0 VNĐ</font></b></html>");
@@ -200,8 +212,8 @@ public class HoaDonPanel extends JPanel {
 
         pnlNut.add(btnThanhToan); pnlNut.add(btnXoaMon); pnlNut.add(btnHuyHoaDon);
 
-        panel.add(pnlTien, BorderLayout.WEST);
-        panel.add(pnlNut, BorderLayout.EAST);
+        panel.add(pnlTien, BorderLayout.NORTH);
+        panel.add(pnlNut, BorderLayout.SOUTH);
 
         return panel;
     }

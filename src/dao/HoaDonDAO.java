@@ -59,6 +59,22 @@ public class HoaDonDAO {
         return timKiem(null);
     }
 
+    // Lấy số thứ tự lớn nhất đã dùng trong mã hóa đơn dạng "HD001", "HD002"...
+    // để lần lập hóa đơn kế tiếp (kể cả sau khi tắt/mở lại app) không bị trùng mã đã có trong CSDL
+    public int laySoThuTuLonNhat() throws SQLException {
+        String sql = "SELECT MAX(CAST(SUBSTRING(ma_hoa_don, 3) AS UNSIGNED)) AS so_lon_nhat " +
+                "FROM hoa_don WHERE ma_hoa_don REGEXP '^HD[0-9]+$'";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt("so_lon_nhat");
+            }
+            return 0;
+        }
+    }
+
     // Tìm theo Mã hóa đơn / Ngày / Khách hàng (khớp gần đúng, không phân biệt hoa thường); truyền null hoặc "" để lấy tất cả
     public List<HoaDon> timKiem(String tuKhoa) throws SQLException {
         StringBuilder sql = new StringBuilder(
